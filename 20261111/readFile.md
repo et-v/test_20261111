@@ -1,36 +1,23 @@
-# Python 檔案讀取：一步一步練習
+# Python 檔案操作：一步一步練習
 
-這份練習會帶你使用 Python 讀取文字檔。請先把本教材與 `sample.txt` 放在同一個資料夾；範例程式也請在該資料夾執行。
+這份教材會帶你練習讀取文字檔、寫入檔案、附加內容，以及讀取 CSV。請先準備好 Python，並在專案根目錄（`readFile.md` 所在的資料夾）執行範例。
 
-## 開始前
+## 練習檔案
 
-確認資料夾中有以下兩個檔案：
+- [`sample.txt`](./sample.txt)：文字檔，供讀取練習。
+- [`students.csv`](./students.csv)：CSV 表格檔，供表格資料練習。
 
-```text
-你的資料夾/
-├── readFile.md
-└── sample.txt
+你可以在 VS Code 開啟終端機，確認目前位置是專案根目錄，再輸入：
+
+```bash
+python --version
 ```
 
-`sample.txt` 是本練習提供的範例檔，內容包含中文、英文和多行文字。請不要先修改它，這樣比較容易對照練習結果。
+若你的環境使用 `python3`，請把下方指令中的 `python` 改成 `python3`。
 
-## 第 1 步：開啟檔案並讀取全部內容
+## 第 1 步：讀取整個文字檔
 
-`open()` 可以開啟檔案。使用 `"r"` 表示「讀取」模式：
-
-```python
-file = open("sample.txt", "r", encoding="utf-8")
-content = file.read()
-file.close()
-
-print(content)
-```
-
-你會看到 `sample.txt` 的全部內容。這裡的 `encoding="utf-8"` 指定文字編碼，讀取含中文的文字檔時很重要。
-
-## 第 2 步：使用 `with` 安全地開啟檔案
-
-上一步需要自己呼叫 `close()`。如果程式中途發生錯誤，可能忘記關閉檔案。更常用的寫法是 `with`：
+`open()` 可以開啟檔案。用 `with` 開啟時，離開區塊後 Python 會自動關閉檔案。
 
 ```python
 with open("sample.txt", "r", encoding="utf-8") as file:
@@ -39,119 +26,139 @@ with open("sample.txt", "r", encoding="utf-8") as file:
 print(content)
 ```
 
-離開 `with` 區塊後，Python 會自動關閉檔案。**建議讀取檔案時使用這種寫法。**
+- `"sample.txt"` 是檔案名稱；相對路徑會從你執行 Python 時的目前資料夾開始尋找。
+- `"r"` 表示讀取（read）。
+- `encoding="utf-8"` 可以正確處理中文文字。
+- `read()` 會一次讀取整個檔案。
 
-注意：`with` 區塊中的程式要縮排（通常是 4 個空格）。
+`sample.txt` 的內容如下：
 
-## 第 3 步：一次讀一行
-
-`readline()` 每次讀取一行：
-
-```python
-with open("sample.txt", "r", encoding="utf-8") as file:
-    first_line = file.readline()
-    second_line = file.readline()
-
-print("第一行：", first_line, end="")
-print("第二行：", second_line, end="")
+```text
+Python 檔案練習
+今天開始學習讀取檔案。
+檔案可以保存文字，讓程式之後再使用。
 ```
 
-行尾通常包含換行字元 `\n`。上例的 `end=""` 是為了避免 `print()` 再額外多印一個換行。
+## 第 2 步：一行一行讀取
 
-## 第 4 步：用迴圈逐行讀取
-
-檔案很大時，逐行處理通常比一次把全部內容讀進記憶體更合適：
+當檔案有很多行時，可以用迴圈逐行處理：
 
 ```python
 with open("sample.txt", "r", encoding="utf-8") as file:
     for line in file:
-        print(line, end="")
+        print(line.rstrip())
 ```
 
-試著改成加上行號：
-
-```python
-with open("sample.txt", "r", encoding="utf-8") as file:
-    for number, line in enumerate(file, start=1):
-        print(f"{number}: {line}", end="")
-```
-
-`enumerate(..., start=1)` 會同時提供行號和該行內容。
-
-## 第 5 步：讀取後分行處理
-
-`readlines()` 會把每一行放進一個清單：
+`rstrip()` 會移除每行結尾的換行符號，避免 `print()` 顯示出多餘的空行。若想把所有行放進串列，也可以使用 `readlines()`：
 
 ```python
 with open("sample.txt", "r", encoding="utf-8") as file:
     lines = file.readlines()
 
-print("總行數：", len(lines))
-print("第一行：", lines[0].strip())
+print(lines)
 ```
 
-`.strip()` 會移除字串前後的空白及換行字元。注意：如果檔案是空的，`lines[0]` 會出錯。
+每個元素通常會保留行尾的 `\n`。若只想讀一行，可以使用 `file.readline()`。
 
-## 第 6 步：使用 `pathlib` 組合檔案路徑
+## 第 3 步：建立並寫入文字檔
 
-前面的範例假設 Python 執行時的目前資料夾正好有 `sample.txt`。如果從其他資料夾執行程式，就可能找不到檔案。
+以下程式會在目前資料夾建立 `my_notes.txt`，並寫入兩行文字：
 
-如果你把程式存成 `.py` 檔，並讓它和 `sample.txt` 放在同一個資料夾，可以用 `pathlib` 以程式所在位置組合路徑：
+```python
+with open("my_notes.txt", "w", encoding="utf-8") as file:
+    file.write("這是我的第一個檔案。\n")
+    file.write("我正在練習 Python 寫檔。\n")
+```
+
+- `"w"` 表示寫入（write）。
+- 如果檔案不存在，Python 會建立它。
+- **如果檔案已存在，`"w"` 會清除舊內容再寫入。** 練習時請留意檔名。
+- `\n` 表示換行。
+
+寫入後，可以用第 1 步的方式讀取 `my_notes.txt`，確認內容。
+
+## 第 4 步：在檔案最後附加內容
+
+若要保留舊內容並加在檔案最後，請使用 `"a"`（append）：
+
+```python
+with open("my_notes.txt", "a", encoding="utf-8") as file:
+    file.write("這一行是後來附加的。\n")
+```
+
+再次讀取 `my_notes.txt`，確認新的一行出現在最後。和 `"w"` 不同，`"a"` 不會先清除舊內容。
+
+## 第 5 步：使用 pathlib 組合檔案路徑
+
+當程式檔案和資料檔放在不同資料夾時，可以使用標準函式庫 `pathlib` 處理路徑：
 
 ```python
 from pathlib import Path
 
-sample_path = Path(__file__).parent / "sample.txt"
+data_path = Path("sample.txt")
+print(data_path.exists())  # 檢查檔案是否存在
 
-with sample_path.open("r", encoding="utf-8") as file:
-    content = file.read()
-
+content = data_path.read_text(encoding="utf-8")
 print(content)
 ```
 
-`Path(__file__).parent` 代表目前這個 Python 程式檔所在的資料夾。若是在互動式環境（例如某些 Notebook）執行，可能沒有 `__file__`；此時可先使用 `"sample.txt"`，並確認 Notebook 的目前資料夾有該檔案。
-
-## 第 7 步：處理檔案不存在的情況
-
-檔名拼錯或檔案不在預期位置時，Python 會引發 `FileNotFoundError`。你可以明確提示使用者：
+`Path("sample.txt")` 一樣是相對於目前執行資料夾。`exists()` 回傳 `True` 代表路徑存在；若要從 Python 程式檔所在位置找檔案，可在 `.py` 檔中使用：
 
 ```python
 from pathlib import Path
 
-sample_path = Path("sample.txt")
-
-try:
-    with sample_path.open("r", encoding="utf-8") as file:
-        content = file.read()
-except FileNotFoundError:
-    print(f"找不到檔案：{sample_path.resolve()}")
-else:
-    print(content)
+script_folder = Path(__file__).resolve().parent
+data_path = script_folder / "sample.txt"
+print(data_path.read_text(encoding="utf-8"))
 ```
 
-`try` 中放可能發生錯誤的讀取程式；`except` 則處理指定的錯誤。練習時若遇到 `FileNotFoundError`，先確認檔名、檔案位置，以及程式從哪個資料夾執行。
+`__file__` 是目前 `.py` 檔的位置，因此這段適合放在 `.py` 檔中執行，不適合直接貼到互動式 Python 終端機。
 
-## 動手練習
+## 第 6 步：讀取 CSV 表格
 
-請使用提供的 `sample.txt`，自己完成以下任務：
+CSV 是常見的表格文字格式。使用 Python 內建的 `csv` 模組讀取時，請開啟 `newline=""`：
 
-1. 讀取並印出全部內容。
-2. 逐行印出內容，並在每行前加上行號。
-3. 計算檔案有幾行。
-4. 計算文字中 `Python` 出現幾次（提示：`content.count("Python")`）。
-5. 只印出含有「檔案」兩個字的行（提示：逐行檢查 `if "檔案" in line:`）。
-6. 把檔名改成 `missing.txt`，觀察錯誤訊息；再使用第 7 步的方式處理錯誤。
+```python
+import csv
 
-## 小抄
+with open("students.csv", "r", encoding="utf-8", newline="") as file:
+    reader = csv.DictReader(file)
+    for row in reader:
+        print(row["name"], row["score"])
+```
 
-| 寫法 | 用途 |
-|---|---|
-| `open("sample.txt", "r", encoding="utf-8")` | 以讀取模式開啟文字檔 |
-| `file.read()` | 讀取全部內容 |
-| `file.readline()` | 讀取一行 |
-| `for line in file:` | 逐行讀取 |
-| `file.readlines()` | 讀取所有行並回傳清單 |
-| `with ... as file:` | 自動管理檔案開啟與關閉 |
-| `line.strip()` | 移除行首、行尾空白與換行 |
-| `Path(__file__).parent / "sample.txt"` | 以程式檔位置組合路徑 |
+`DictReader` 會使用 CSV 第一列的欄位名稱，因此每一筆資料可以用 `row["name"]`、`row["score"]` 取得。CSV 讀進來的值是文字；需要數字時可以轉型：
 
+```python
+score = int(row["score"])
+```
+
+## 練習題
+
+請先自己完成，再看提示：
+
+1. 讀取 `sample.txt`，並計算檔案共有幾行。
+2. 建立 `journal.txt`，寫入一句今天學到的內容。
+3. 再執行一次附加模式，為 `journal.txt` 多加一行；確認舊內容仍在。
+4. 讀取 `students.csv`，算出所有學生的平均分數。
+
+提示：
+
+```python
+# 計算行數：可以把 file.readlines() 存起來，再使用 len(...)
+# 平均分數：先建立 total 和 count，逐筆加總後用 total / count
+```
+
+## 常見問題
+
+- **找不到檔案（`FileNotFoundError`）**：確認檔案名稱、大小寫，以及執行程式時所在的資料夾。可以用 `Path.cwd()` 查看目前資料夾。
+- **中文顯示不正常**：開啟文字檔時指定 `encoding="utf-8"`。
+- **為什麼要用 `with`？** 它會在區塊結束時自動關閉檔案，避免忘記關閉。
+- **讀取、寫入、附加有什麼差別？** `"r"` 讀取；`"w"` 寫入並覆蓋舊內容；`"a"` 保留舊內容並在最後附加。
+
+## 完成檢查
+
+- [ ] 能讀取 `sample.txt` 並印出內容。
+- [ ] 能用迴圈逐行讀取檔案。
+- [ ] 能建立自己的文字檔，並分辨 `"w"` 和 `"a"`。
+- [ ] 能用 `csv.DictReader` 讀取學生資料。
